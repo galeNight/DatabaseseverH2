@@ -79,7 +79,7 @@ RECONFIGURE;
 EXEC sp_configure 'remote admin connections', 1;
 RECONFIGURE;
 
-EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'TcpEnabled';
+--EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'TcpEnabled';
 
 
 use PatientDatabase
