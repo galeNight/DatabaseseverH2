@@ -2,7 +2,7 @@ use master
 go
 if DB_ID('PatientDatabase') is not null
 	begin
-	--alter database PatientDatabase set single_user with rollback immediate
+	alter database PatientDatabase set single_user with rollback immediate
 	drop database PatientDatabase
 	end
 create database PatientDatabase -- laver database
@@ -19,35 +19,31 @@ Id int identity(1,1)primary key,
 FirstName nvarchar(255),
 LastName nvarchar(255)
 )
-
 create table Patient( -- table med navn og referance
 Id int identity(1,1)primary key,
 FristName nvarchar(255),
 LastName nvarchar(255),
 PatientTlfNr Nvarchar(255),
-DoctoreId int
-foreign key (DoctoreId) references Doctores(Id)
 )
-
 create table Departments( -- table med arbejdsafdelings navn
 Id int identity(1,1)primary key,
 DepartmentsName nvarchar(255),
 DoctorId int
 foreign key (DoctorId) references Doctores(Id)
 )
-
 create table WherePatiensis( -- table hvor patinterne er og med referancer 
 Id int identity(1,1) primary key,
 PatientId int,
-DepartmentId int
+DepartmentId int,
 foreign key(PatientId) references Patient(Id),
 foreign key (DepartmentId) references Departments(Id)
 )
 
 
 insert into Patient(FristName,LastName,PatientTlfNr)values('tets','Testes',99999999)--data
-insert into Departments(DepartmentsName)values('testtesttest')
+insert into Departments(DepartmentsName,DoctorId)values('testtesttest',1)
 insert into Doctores(FirstName,LastName)values('Doctor','test')
+insert into WherePatiensis(PatientId,DepartmentId)values(1,2) -- set 2 til 1 hvis department id er 1 og omvent til 2 hvis id er 2
 
 select * from Doctores -- viser data der ligger i table
 select * from Patient
@@ -70,6 +66,7 @@ create user niels for Login Niels; -- laver en user
 alter role db_owner
 add member niels
 
+
 --backup database PatientDatabase -- laver en backup
 --to disk = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\Backup\PatientDatabase.bak'; -- sti til backupsted
 
@@ -79,7 +76,7 @@ RECONFIGURE;
 EXEC sp_configure 'remote admin connections', 1;
 RECONFIGURE;
 
---EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'TcpEnabled';
+--EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'TcpEnabled'; -- er mening at den skal vise om Tcp er 1 for at være tænt men virker ikke
 
 
 use PatientDatabase
@@ -114,3 +111,16 @@ go
 exec dbo.sp_add_jobserver
 @job_name = N'Check db size';
 go
+
+
+use PatientDatabase
+select 
+	CONCAT(left(P.FristName,1),'. ',P.LastName) as 'Patients',
+	CONCAT(D.FirstName,' ',D.Lastname) as 'Doctores',
+	DM.DepartmentsName as 'Departments'
+from 
+	Patient P
+	join WherePatiensis Wp on P.Id = Wp.PatientId
+	join Departments DM on Wp.DepartmentId = DM.Id
+	join Doctores D on DM.DoctorId = D.Id
+
