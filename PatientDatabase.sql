@@ -1,8 +1,21 @@
+-- requirements to donwload SSMS
+-- windows 10 version 1607(10.014393 of later or windows 11 
+-- 1.8 GHz or faster x86 (Intel, AMD) processor. Dual-core or better recommended
+--2 GB of RAM; 4 GB of RAM recommended (2.5 GB minimum if running on a virtual machine)
+--Hard disk space: Minimum of 2 GB up to 10 GB of available space
+
+--my pc requirements are 
+--Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz   1.80 GHz
+--8,00 GB (7,81 GB kan bruges)
+-- 64-bit operativsystem, x64-baseret processor
+-- windows 10 enterprise version 22H2 and opertinsystem build 19045.2965
+
+
 use master
 go
-if DB_ID('PatientDatabase') is not null
+if DB_ID('PatientDatabase') is not null -- alter database og setter med en user så den kan rolle tilbage og droppe databasen
 	begin
-	alter database PatientDatabase set single_user with rollback immediate
+	alter database PatientDatabase set single_user with rollback immediate 
 	drop database PatientDatabase
 	end
 create database PatientDatabase -- laver database
@@ -50,19 +63,19 @@ select * from Patient
 select * from Departments
 
 
-go
+go --opret bruger på severen
 create login Ole with password = 'test', check_policy = off
-create login Niels with password = 'test', check_policy = off --opret bruger sever
+create login Niels with password = 'test', check_policy = off 
 go
 
-alter server role [sysadmin] add member Niels --tildel severrolle
+alter server role [sysadmin] add member Niels --tildel role på severen
 
 use PatientDatabase;
 
-create user ole for login Ole;
-alter role db_datareader
+create user ole for login Ole; -- laver en user på databasen
+alter role db_datareader -- tildeler role til user på databasen
 add member ole
-create user niels for Login Niels; -- laver en user 
+create user niels for Login Niels; 
 alter role db_owner
 add member niels
 
@@ -88,7 +101,7 @@ use PatientDatabase
 exec sp_helprotect @username=Ole
 exec sp_helprotect @username=Niels
 
-use msdb
+use msdb -- create job
 go
 exec dbo.sp_add_job
 @job_name = N'Check db size';
@@ -108,13 +121,14 @@ exec dbo.sp_add_schedule
 @freq_interval = 1,
 @active_start_time = 033000;
 go
-exec dbo.sp_add_jobserver
+exec dbo.sp_add_jobserver 
 @job_name = N'Check db size';
 go
 
 
 use PatientDatabase
-select 
+
+select --viser patient navn hvilken doctor patienten har og hvad doctorens specialiserre sig i via department
 	CONCAT(left(P.FristName,1),'. ',P.LastName) as 'Patients',
 	CONCAT(D.FirstName,' ',D.Lastname) as 'Doctores',
 	DM.DepartmentsName as 'Departments'
@@ -124,3 +138,31 @@ from
 	join Departments DM on Wp.DepartmentId = DM.Id
 	join Doctores D on DM.DoctorId = D.Id
 
+select -- viser patinternes navn og hvor mange doctor de har
+	CONCAT(left(P.FristName,1),'. ',P.LastName) as 'Patient',
+	count(distinct DM.DoctorId) as 'Amount of Doctor'
+from Patient P
+join WherePatiensis Wp on p.Id = Wp.PatientId
+join Departments DM on Wp.DepartmentId = DM.Id
+group by
+p.Id,p.FristName,p.LastName;
+
+
+select -- viser doctorens navne og hvor mange patienter de har
+	CONCAT(D.FirstName,'',D.LastName) as 'Doctor',
+	COUNT(distinct Wp.PatientId) as 'Amount of Patients'
+from Doctores D
+join Departments DM on D.Id = DM.DoctorId
+join WherePatiensis Wp on DM.Id = Wp.DepartmentId
+group by D.Id,D.FirstName,D.LastName
+
+alter table Patient
+add Age int;
+
+update Patient
+set Age = FLOOR(rand() * 18 + 1)
+
+select AVG(Age) as 'AverageAge'
+from Patient
+
+select * from Patient
