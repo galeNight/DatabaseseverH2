@@ -156,13 +156,13 @@ join Departments DM on D.Id = DM.DoctorId
 join WherePatiensis Wp on DM.Id = Wp.DepartmentId
 group by D.Id,D.FirstName,D.LastName
 
-alter table Patient
+alter table Patient -- toæføger age til patient table
 add Age int;
 
-update Patient
+update Patient --updatere patinterne med en tilfældig alder
 set Age = FLOOR(rand() * 18 + 1)
 
-select AVG(Age) as 'AverageAge'
+select AVG(Age) as 'AverageAge' -- viser Gennemsnit alder
 from Patient
 
-select * from Patient
+select * from Patient -- viser data patient fra tabel
